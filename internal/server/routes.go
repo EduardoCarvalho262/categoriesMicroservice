@@ -21,6 +21,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 }
 
 func (s *Server) GetAllCategoriesHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	jsonResp, err := json.Marshal(s.Db.GetAllCategories())
 
 	if err != nil {

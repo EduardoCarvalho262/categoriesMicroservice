@@ -59,6 +59,13 @@ func New() Service {
 	return dbInstance
 }
 
+func NewTest(db *sql.DB) Service {
+	dbInstance = &service{
+		db: db,
+	}
+	return dbInstance
+}
+
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
 func (s *service) Health() map[string]string {
