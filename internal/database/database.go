@@ -22,9 +22,9 @@ type Service interface {
 
 	GetAllCategories() []model.Category
 
-	InsertCategory(*http.Request) string
+	InsertCategory(*http.Request) (int64, error)
 
-	DeleteCategory(*http.Request) string
+	DeleteCategory(*http.Request) (int64, error)
 
 	Close() error
 }
@@ -148,30 +148,30 @@ func (s *service) GetAllCategories() []model.Category {
 	return categories
 }
 
-func (s *service) InsertCategory(r *http.Request) string {
+func (s *service) InsertCategory(r *http.Request) (int64, error) {
 	var category model.Category
 	err := json.NewDecoder(r.Body).Decode(&category)
 	if err != nil {
-		log.Fatal("Error: ", err)
+		return 0, fmt.Errorf("error decoding request body: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	result, err := s.db.ExecContext(ctx, `INSERT INTO Category (Nome, Quantidade, Limite) VALUES ($1, $2, $3);`, &category.Nome, &category.Quantidade, &category.Limite)
-
+	result, err := s.db.ExecContext(ctx, `INSERT INTO Category (Nome, Quantidade, Limite) VALUES ($1, $2, $3);`, category.Nome, category.Quantidade, category.Limite)
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("error executing insert query: %v", err)
 	}
+
 	rows, err := result.RowsAffected()
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("error getting rows affected: %v", err)
 	}
 
-	return strconv.FormatInt(rows, 10)
+	return rows, nil
 }
 
-func (s *service) DeleteCategory(r *http.Request) string {
+func (s *service) DeleteCategory(r *http.Request) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -187,7 +187,7 @@ func (s *service) DeleteCategory(r *http.Request) string {
 		log.Fatal(err)
 	}
 
-	return strconv.FormatInt(rows, 10)
+	return rows, nil
 }
 
 func (s *service) Close() error {
